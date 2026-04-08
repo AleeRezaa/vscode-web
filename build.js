@@ -68,6 +68,21 @@ if (!fs.existsSync("node_modules")) {
   ok("node_modules exists. Skipping npm install");
 }
 
+// Patch chatDebugEditor.ts: add missing `protected` modifier to setEditorVisible override
+// Without this, the vscode mangler errors with "Protected fields have been made PUBLIC"
+const chatDebugEditorPath = "src/vs/workbench/contrib/chat/browser/chatDebug/chatDebugEditor.ts";
+if (fs.existsSync(chatDebugEditorPath)) {
+  const original = fs.readFileSync(chatDebugEditorPath, "utf8");
+  const patched = original.replace(
+    /\toverride setEditorVisible\(visible: boolean\): void \{/,
+    "\tprotected override setEditorVisible(visible: boolean): void {"
+  );
+  if (patched !== original) {
+    fs.writeFileSync(chatDebugEditorPath, patched, "utf8");
+    ok("patched chatDebugEditor.ts: added protected modifier to setEditorVisible");
+  }
+}
+
 // Use simple workbench
 note("copying workbench file");
 fs.copyFileSync(
